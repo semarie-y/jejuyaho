@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>제주 야호~! 🍊 우리끼리 제주 맛집 지도</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=c96dc3e9c8ea1ec2073ee7b1b051c958&libraries=services"></script>
+<style>
+  :root{
+    --sea:#3A8891;
+    --sea-dark:#2C6B72;
+    --tangerine:#FF8C42;
+    --tangerine-dark:#E8722A;
+    --cream:#FFF8EF;
+    --card:#FFFFFF;
+    --text:#4A3F35;
+    --muted:#9C8F82;
+    --line:#F0E4D6;
+    --tabbar-h:64px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background:var(--cream);
+    font-family:'Gowun Dodum', sans-serif;
+    color:var(--text);
+    padding-bottom:var(--tabbar-h);
+  }
+  header{
+    background:linear-gradient(135deg, var(--sea) 0%, var(--sea-dark) 100%);
+    color:#fff;
+    padding:28px 20px 20px;
+    text-align:center;
+    border-radius:0 0 22px 22px;
+    box-shadow:0 4px 16px rgba(0,0,0,0.08);
+  }
+  header h1{
+    font-family:'Jua', sans-serif;
+    font-size:1.6rem;
+    margin:0 0 4px;
+    letter-spacing:-0.5px;
+  }
+  header p{
+    margin:0;
+    font-size:0.85rem;
+    opacity:0.9;
+  }
+  #updated{
+    margin-top:8px;
+    font-size:0.72rem;
+    opacity:0.75;
+  }
+  main{
+    max-width:720px;
+    margin:0 auto;
+    padding:16px 12px 40px;
+  }
+  #filters{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding:2px 2px 12px;
+    margin-bottom:8px;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  #filters::-webkit-scrollbar{ display:none; }
+  .chip{
+    flex:0 0 auto;
+    font-family:'Gowun Dodum', sans-serif;
+    padding:8px 16px;
+    border-radius:999px;
+    background:#fff;
+    color:var(--text);
+    border:1.5px solid var(--line);
+    cursor:pointer;
+    font-size:0.85rem;
+    white-space:nowrap;
+    transition:all 0.15s ease;
+  }
+  .chip.active{
+    background:var(--tangerine);
+    border-color:var(--tangerine);
+    color:#fff;
+    font-weight:bold;
+  }
+  #search{
+    display:block;
+    width:100%;
+    margin:0 0 14px;
+    padding:11px 16px;
+    border-radius:14px;
+    border:1.5px solid var(--line);
+    font-family:'Gowun Dodum', sans-serif;
+    font-size:0.95rem;
+    background:#fff;
+  }
+  #search:focus{ outline:2px solid var(--tangerine); }
+
+  .view{ display:none; }
+  .view.active{ display:block; }
+
+  #grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));
+    gap:14px;
+  }
+  .card{
+    background:var(--card);
+    border-radius:18px;
+    padding:16px 16px 14px;
+    box-shadow:0 2px 10px rgba(74,63,53,0.06);
+    border:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+  }
+  .card-top{ display:flex; align-items:center; gap:8px; }
+  .emoji{ font-size:1.3rem; }
+  .name{
+    font-family:'Jua', sans-serif;
+    font-size:1.08rem;
+    margin:0;
+    color:var(--text);
+  }
+  .tag{
+    display:inline-block;
+    font-size:0.7rem;
+    padding:3px 10px;
+    border-radius:999px;
+    color:#5a4a3a;
+    width:fit-content;
+  }
+  .addr{ font-size:0.82rem; color:var(--muted); line-height:1.4; }
+  .note{
+    font-size:0.78rem;
+    color:var(--tangerine-dark);
+    background:#FFF1E4;
+    padding:3px 10px;
+    border-radius:8px;
+    width:fit-content;
+  }
+  .map-link{
+    margin-top:2px;
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    font-size:0.82rem;
+    color:#fff;
+    background:var(--sea);
+    text-decoration:none;
+    padding:7px 13px;
+    border-radius:12px;
+    width:fit-content;
+  }
+
+  #map-wrap{
+    position:relative;
+    border-radius:18px;
+    overflow:hidden;
+    border:1px solid var(--line);
+    box-shadow:0 2px 10px rgba(74,63,53,0.06);
+  }
+  #map{ width:100%; height:calc(100vh - 300px); min-height:380px; }
+  #map-status{
+    position:absolute;
+    top:10px; left:10px; right:10px;
+    background:rgba(255,255,255,0.95);
+    border-radius:12px;
+    padding:8px 12px;
+    font-size:0.8rem;
+    color:var(--muted);
+    text-align:center;
+    box-shadow:0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  #state{
+    text-align:center;
+    padding:60px 16px;
+    color:var(--muted);
+    font-size:0.92rem;
+    line-height:1.7;
+  }
+
+  #tabbar{
+    position:fixed;
+    bottom:0; left:0; right:0;
+    height:var(--tabbar-h);
+    background:#fff;
+    border-top:1px solid var(--line);
+    display:flex;
+    box-shadow:0 -2px 10px rgba(0,0,0,0.05);
+    z-index:20;
+  }
+  .tab-btn{
+    flex:1;
+    border:none;
+    background:none;
+    font-family:'Gowun Dodum', sans-serif;
+    font-size:0.8rem;
+    color:var(--muted);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:2px;
+    cursor:pointer;
+  }
+  .tab-btn .tab-emoji{ font-size:1.3rem; }
+  .tab-btn.active{ color:var(--tangerine-dark); font-weight:bold; }
+
+  footer{
+    text-align:center;
+    padding:16px;
+    font-size:0.75rem;
+    color:var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>제주 야호~! 🍊</h1>
+  <p>우리끼리 모은 제주 맛집 지도</p>
+  <div id="updated">불러오는 중...</div>
+</header>
+
+<main>
+  <input id="search" type="text" placeholder="가게 이름이나 지역으로 검색해보세요">
+  <div id="filters"></div>
+
+  <section id="view-list" class="view active">
+    <div id="grid"></div>
+  </section>
+
+  <section id="view-map" class="view">
+    <div id="map-wrap">
+      <div id="map"></div>
+      <div id="map-status" style="display:none;"></div>
+    </div>
+  </section>
+
+  <div id="state" style="display:none;"></div>
+</main>
+
+<div id="tabbar">
+  <button class="tab-btn active" data-tab="list">
+    <span class="tab-emoji">📋</span>리스트
+  </button>
+  <button class="tab-btn" data-tab="map">
+    <span class="tab-emoji">🗺️</span>지도
+  </button>
+</div>
+
+<footer>Data from Google Sheets · 시트가 바뀌면 새로고침 시 자동으로 반영됩니다</footer>
+
+<script>
+// ====== 이 부분만 바꾸면 다른 시트에도 재사용할 수 있어요 ======
+const SHEET_ID = "1C4X2KjbE3sNUVSbSIjZjqo-oDFeEIhEEM8q0akxJsSg";
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+// ================================================================
+
+const CATEGORY_META = {
+  "베이커리": { emoji:"🥐", color:"#F6C89F" },
+  "양식":     { emoji:"🍝", color:"#FFD3B0" },
+  "일식":     { emoji:"🍣", color:"#FFB6B9" },
+  "중식":     { emoji:"🥟", color:"#FFDAC1" },
+  "카페":     { emoji:"☕", color:"#C7CEEA" },
+  "한식":     { emoji:"🍚", color:"#B5EAD7" },
+  "키즈":     { emoji:"🧸", color:"#E2F0CB" },
+};
+const DEFAULT_META = { emoji:"🍽️", color:"#EFE6DA" };
+
+let allItems = [];
+let activeCategory = "전체";
+let activeTab = "list";
+
+// ---------- 데이터 불러오기 & 파싱 ----------
+
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = "", inQuotes = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    if(inQuotes){
+      if(c === '"'){
+        if(text[i+1] === '"'){ field += '"'; i++; }
+        else{ inQuotes = false; }
+      } else { field += c; }
+    } else {
+      if(c === '"'){ inQuotes = true; }
+      else if(c === ','){ row.push(field); field=""; }
+      else if(c === '\n'){ row.push(field); rows.push(row); row=[]; field=""; }
+      else if(c === '\r'){ /* skip */ }
+      else { field += c; }
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows;
+}
+
+function findHeaderRow(rows){
+  for(let r=0;r<rows.length;r++){
+    if(rows[r].some(cell => cell.trim() === "구분")){
+      return r;
+    }
+  }
+  return -1;
+}
+
+function buildItems(rows){
+  const headerIdx = findHeaderRow(rows);
+  if(headerIdx === -1) throw new Error("헤더(구분/상호명 등) 행을 찾지 못했습니다.");
+  const header = rows[headerIdx].map(h => h.trim());
+  const col = {
+    category: header.indexOf("구분"),
+    name: header.indexOf("상호명"),
+    address: header.indexOf("위치"),
+    link: header.indexOf("지도 링크"),
+    note: header.indexOf("비고"),
+  };
+  const items = [];
+  for(let r=headerIdx+1; r<rows.length; r++){
+    const row = rows[r];
+    const name = (row[col.name] || "").trim();
+    if(!name) continue;
+    items.push({
+      category: (row[col.category] || "").trim(),
+      name,
+      address: (row[col.address] || "").trim(),
+      link: (row[col.link] || "").trim(),
+      note: (row[col.note] || "").trim(),
+    });
+  }
+  return items;
+}
+
+// ---------- 필터 / 검색 ----------
+
+function getFiltered(){
+  const query = document.getElementById("search").value.trim().toLowerCase();
+  return allItems.filter(i => {
+    const matchCat = activeCategory === "전체" || i.category === activeCategory;
+    const matchQuery = !query || i.name.toLowerCase().includes(query) || i.address.toLowerCase().includes(query);
+    return matchCat && matchQuery;
+  });
+}
+
+function renderFilters(){
+  const cats = Array.from(new Set(allItems.map(i => i.category).filter(Boolean)));
+  const el = document.getElementById("filters");
+  el.innerHTML = "";
+  const makeChip = (label) => {
+    const btn = document.createElement("button");
+    btn.className = "chip" + (label === activeCategory ? " active" : "");
+    btn.textContent = label === "전체" ? "전체" : `${(CATEGORY_META[label]||DEFAULT_META).emoji} ${label}`;
+    btn.onclick = () => { activeCategory = label; renderAll(); };
+    return btn;
+  };
+  el.appendChild(makeChip("전체"));
+  cats.forEach(c => el.appendChild(makeChip(c)));
+}
+
+// ---------- 리스트 뷰 ----------
+
+function renderGrid(){
+  const grid = document.getElementById("grid");
+  const filtered = getFiltered();
+  grid.innerHTML = "";
+  if(filtered.length === 0){
+    grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--muted); padding:40px 0;">조건에 맞는 맛집이 없어요 🥲</div>`;
+    return;
+  }
+  filtered.forEach(item => {
+    const meta = CATEGORY_META[item.category] || DEFAULT_META;
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="card-top">
+        <span class="emoji">${meta.emoji}</span>
+        <p class="name">${item.name}</p>
+      </div>
+      <span class="tag" style="background:${meta.color}">${item.category || "기타"}</span>
+      <div class="addr">${item.address}</div>
+      ${item.note ? `<span class="note">${item.note}</span>` : ""}
+      ${item.link ? `<a class="map-link" href="${item.link}" target="_blank" rel="noopener">📍 네이버 지도에서 보기</a>` : ""}
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ---------- 지도 뷰 (카카오맵) ----------
+
+let kakaoMap = null;
+let mapMarkers = [];
+let geocoder = null;
+const GEOCODE_CACHE_KEY = "jeju-map-geocache-v1";
+
+function loadGeoCache(){
+  try{ return JSON.parse(localStorage.getItem(GEOCODE_CACHE_KEY)) || {}; }
+  catch(e){ return {}; }
+}
+function saveGeoCache(cache){
+  try{ localStorage.setItem(GEOCODE_CACHE_KEY, JSON.stringify(cache)); }
+  catch(e){ /* ignore */ }
+}
+
+function geocodeOne(address, cache){
+  return new Promise(resolve => {
+    if(cache[address]){ resolve(cache[address]); return; }
+    geocoder.addressSearch(address, (result, status) => {
+      if(status === kakao.maps.services.Status.OK && result[0]){
+        const coords = { lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) };
+        cache[address] = coords;
+        resolve(coords);
+      } else {
+        resolve(null);
+      }
+    });
+  });
+}
+
+function clearMarkers(){
+  mapMarkers.forEach(m => m.setMap(null));
+  mapMarkers = [];
+}
+
+function setMapStatus(text){
+  const el = document.getElementById("map-status");
+  if(!text){ el.style.display = "none"; return; }
+  el.style.display = "block";
+  el.textContent = text;
+}
+
+async function renderMap(){
+  if(!kakaoMap){
+    kakaoMap = new kakao.maps.Map(document.getElementById("map"), {
+      center: new kakao.maps.LatLng(33.3846, 126.5535), // 제주도 중심
+      level: 10
+    });
+    geocoder = new kakao.maps.services.Geocoder();
+  }
+
+  clearMarkers();
+  const filtered = getFiltered();
+  if(filtered.length === 0){
+    setMapStatus("조건에 맞는 맛집이 없어요 🥲");
+    return;
+  }
+
+  const cache = loadGeoCache();
+  const uncached = filtered.filter(i => !cache[i.address]).length;
+  if(uncached > 0){
+    setMapStatus(`위치 정보를 확인하는 중... (${uncached}곳)`);
+  } else {
+    setMapStatus(null);
+  }
+
+  const bounds = new kakao.maps.LatLngBounds();
+  let placed = 0;
+
+  for(const item of filtered){
+    const coords = await geocodeOne(item.address, cache);
+    if(!coords) continue;
+    const meta = CATEGORY_META[item.category] || DEFAULT_META;
+    const position = new kakao.maps.LatLng(coords.lat, coords.lng);
+
+    const marker = new kakao.maps.Marker({ position, map: kakaoMap, title: item.name });
+    const infowindow = new kakao.maps.InfoWindow({
+      content: `
+        <div style="padding:8px 10px; font-size:13px; line-height:1.5; max-width:200px;">
+          <b>${meta.emoji} ${item.name}</b><br>
+          <span style="color:#888;">${item.category || ""}${item.note ? " · " + item.note : ""}</span><br>
+          ${item.link ? `<a href="${item.link}" target="_blank" rel="noopener">네이버 지도 보기</a>` : ""}
+        </div>`
+    });
+    kakao.maps.event.addListener(marker, "click", () => infowindow.open(kakaoMap, marker));
+
+    mapMarkers.push(marker);
+    bounds.extend(position);
+    placed++;
+  }
+
+  saveGeoCache(cache);
+  setMapStatus(null);
+
+  if(placed > 0){
+    kakaoMap.setBounds(bounds);
+  }
+}
+
+// ---------- 공통 ----------
+
+function renderAll(){
+  renderFilters();
+  renderGrid();
+  if(activeTab === "map"){ renderMap(); }
+}
+
+function switchTab(tab){
+  activeTab = tab;
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  document.getElementById("view-list").classList.toggle("active", tab === "list");
+  document.getElementById("view-map").classList.toggle("active", tab === "map");
+  if(tab === "map"){
+    renderMap();
+    // 탭 전환 직후 지도 크기 재계산 (숨겨져 있던 지도는 크기 계산이 어긋날 수 있음)
+    setTimeout(() => { if(kakaoMap) kakaoMap.relayout(); }, 50);
+  }
+}
+
+function showState(message){
+  document.getElementById("state").style.display = "block";
+  document.getElementById("state").innerHTML = message;
+  document.getElementById("view-list").classList.remove("active");
+  document.getElementById("view-map").classList.remove("active");
+  document.getElementById("filters").innerHTML = "";
+}
+
+async function load(){
+  try{
+    const res = await fetch(CSV_URL, { cache: "no-store" });
+    if(!res.ok) throw new Error("시트를 불러오지 못했습니다 (상태: " + res.status + ")");
+    const text = await res.text();
+    const rows = parseCSV(text);
+    allItems = buildItems(rows);
+    document.getElementById("state").style.display = "none";
+    document.getElementById("updated").textContent =
+      "마지막 확인: " + new Date().toLocaleString("ko-KR");
+    renderAll();
+  } catch(err){
+    console.error(err);
+    showState(`
+      맛집 리스트를 불러오지 못했어요.<br>
+      구글시트가 <b>"링크가 있는 모든 사용자 - 뷰어"</b>로 공유되어 있는지 확인해주세요.<br>
+      <span style="font-size:0.8rem;">(${err.message})</span>
+    `);
+  }
+}
+
+document.getElementById("search").addEventListener("input", renderAll);
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+});
+
+load();
+</script>
+</body>
+</html>
