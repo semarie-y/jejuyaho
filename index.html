@@ -133,7 +133,7 @@
     .tag{ font-size:0.64rem; padding:2px 8px; }
     .addr{ font-size:0.72rem; }
     .note{ font-size:0.68rem; padding:2px 8px; }
-    .map-link{ font-size:0.7rem; padding:6px 9px; gap:3px; }
+    .map-link{ font-size:0.64rem; padding:6px 8px; gap:3px; width:100%; justify-content:center; white-space:nowrap; }
   }
   .card-top{ display:flex; align-items:center; gap:8px; }
   .emoji{ font-size:1.3rem; }
@@ -403,7 +403,7 @@ function renderGrid(){
       </div>
       <span class="tag" style="background:${meta.color}">${item.category || "기타"}</span>
       <div class="addr">${item.address}</div>
-      ${item.note ? `<span class="note">${item.note}</span>` : ""}
+      ${item.note ? `<span class="note">#${item.note}</span>` : ""}
       ${item.link ? `<a class="map-link" href="${item.link}" target="_blank" rel="noopener">📍 네이버 지도에서 보기</a>` : ""}
     `;
     grid.appendChild(card);
@@ -491,7 +491,7 @@ async function renderMap(){
       content: `
         <div style="padding:8px 10px; font-size:13px; line-height:1.5; max-width:200px;">
           <b>${meta.emoji} ${item.name}</b><br>
-          <span style="color:#888;">${item.category || ""}${item.note ? " · " + item.note : ""}</span><br>
+          <span style="color:#888;">${item.category || ""}${item.note ? " · #" + item.note : ""}</span><br>
           ${item.link ? `<a href="${item.link}" target="_blank" rel="noopener">네이버 지도 보기</a>` : ""}
         </div>`
     });
