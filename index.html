@@ -53,6 +53,11 @@
     font-size:0.72rem;
     opacity:0.75;
   }
+  #credit{
+    margin-top:4px;
+    font-size:0.62rem;
+    opacity:0.65;
+  }
   main{
     max-width:720px;
     margin:0 auto;
@@ -117,6 +122,18 @@
     display:flex;
     flex-direction:column;
     gap:7px;
+    min-width:0;
+  }
+  .card .name{ overflow-wrap:break-word; }
+  @media (max-width:480px){
+    #grid{ grid-template-columns:repeat(2, 1fr); gap:10px; }
+    .card{ padding:12px 12px 10px; gap:5px; border-radius:14px; }
+    .name{ font-size:0.92rem; }
+    .emoji{ font-size:1.1rem; }
+    .tag{ font-size:0.64rem; padding:2px 8px; }
+    .addr{ font-size:0.72rem; }
+    .note{ font-size:0.68rem; padding:2px 8px; }
+    .map-link{ font-size:0.7rem; padding:6px 9px; gap:3px; }
   }
   .card-top{ display:flex; align-items:center; gap:8px; }
   .emoji{ font-size:1.3rem; }
@@ -226,6 +243,7 @@
   <h1>제주 야호~! 🍊</h1>
   <p>우리끼리 모은 제주 맛집 지도</p>
   <div id="updated">불러오는 중...</div>
+  <div id="credit">정보제공: keebot🤖 / 웹페이지 제작·배포: 🐑세마리</div>
 </header>
 
 <main>
@@ -255,10 +273,7 @@
   </button>
 </div>
 
-<footer>
-  Data from Google Sheets · 시트가 바뀌면 새로고침 시 자동으로 반영됩니다
-  <div style="margin-top:4px; font-size:0.68rem; opacity:0.8;">정보제공: keebot🤖 / 웹페이지 제작·배포: 🐑세마리</div>
-</footer>
+<footer>Data from Google Sheets · 시트가 바뀌면 새로고침 시 자동으로 반영됩니다</footer>
 
 <script>
 // ====== 이 부분만 바꾸면 다른 시트에도 재사용할 수 있어요 ======
