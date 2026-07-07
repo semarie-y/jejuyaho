@@ -308,6 +308,7 @@ const CATEGORY_META = {
   "카페":     { emoji:"☕", color:"#C7CEEA" },
   "한식":     { emoji:"🍚", color:"#B5EAD7" },
   "키즈":     { emoji:"🧸", color:"#E2F0CB" },
+  "Bar":      { emoji:"🍸", color:"#D9BBDD" },
 };
 const DEFAULT_META = { emoji:"🍽️", color:"#EFE6DA" };
 
@@ -393,7 +394,9 @@ function renderFilters(){
   const makeChip = (label) => {
     const btn = document.createElement("button");
     btn.className = "chip" + (label === activeCategory ? " active" : "");
-    btn.textContent = label === "전체" ? "전체" : `${(CATEGORY_META[label]||DEFAULT_META).emoji} ${label}`;
+    const count = label === "전체" ? allItems.length : allItems.filter(i => i.category === label).length;
+    const baseLabel = label === "전체" ? "전체" : `${(CATEGORY_META[label]||DEFAULT_META).emoji} ${label}`;
+    btn.textContent = `${baseLabel}(${count})`;
     btn.onclick = () => { activeCategory = label; renderAll(); };
     return btn;
   };
